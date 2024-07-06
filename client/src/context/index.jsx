@@ -8,6 +8,7 @@ import { abi } from '../utils/contractABI'
 import useGetCampaigns from '../hooks/getCampaigns'
 import useGetDonations from '../hooks/getDonations'
 
+
 const StateContext = createContext()
 const clientId =  import.meta.env.VITE_CLIENT_ID
 const client = createThirdwebClient({ clientId })
@@ -90,6 +91,52 @@ export const StateContextProvider = ({ children }) => {
         }
     }
 
+    // const { mutate: sendTransaction } = useSendTransaction()
+
+    // const donate = async (pId, amount) => {
+    //     try {
+    //         const transaction = prepareContractCall({
+    //             contract,
+    //             method: "function donateToCampaign(uint256 _id) payable",
+    //             params: [pId],
+    //           })
+
+    //           await sendTransaction(transaction).catch((err) => {
+    //             setError(err)
+    //           })
+    //     } catch (error) {
+    //         console.log('Contract Call Failed: ', error)
+    //     }
+    // }
+    const { mutate: sendTransaction } = useSendTransaction()
+    const donate = async (contract, pId, amount) => {
+        try {
+            if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+                throw new Error('Invalid amount. Please enter a valid number greater than zero.')
+            }
+            const transaction = prepareContractCall({
+                contract,
+                method: "donateToCampaign",
+                params: [pId],
+                value: ethers.utils.parseEther(amount),
+            })
+    
+            console.log('Transaction:', transaction)
+    
+            sendTransaction(transaction, {
+                onSuccess: (data) => {
+                    console.log('Contract Success: ', data)
+                },
+                onError: (error) => {
+                    console.log('Contract Call Failed: ', error)
+                }
+            })
+    
+        } catch (error) {
+            console.error('Contract Call Failed: ', error)
+        }
+    }
+
     return (
         <StateContext.Provider
             value={{
@@ -99,6 +146,7 @@ export const StateContextProvider = ({ children }) => {
                 createCampaign: publishCampaign,
                 useGetCampaigns,
                 useGetDonations,
+                donate
             }}
         >
             {children}

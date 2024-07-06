@@ -21,22 +21,50 @@ const CampaignDetails = () => {
 
   const remainingDays = daysLeft(state.deadline)
 
-  const fetchDonators = async () => {
-    setDonators(parsedDonations)
-  }
-
   useEffect(() => {
-    if (contract) fetchDonators()
-  }, [contract, address])
+    const fetchDonators = async () => {
+      try {
+        if (contract && parsedDonations.length > 0) {
+          setDonators(parsedDonations)
+        }
+      } catch (error) {
+        console.error('Error fetching donators:', error)
+      }
+    }
+
+    fetchDonators()
+  }, [contract, parsedDonations])
+
+  // const handleDonate = async () => {
+  //   setIsLoading(true)
+
+  //   await donate(state.pId, amount)
+  //   console.log('Donation successful:', data)
+
+  //   navigate('/')
+  //   setIsLoading(false)
+  // }
 
   const handleDonate = async () => {
     setIsLoading(true)
 
-    await donate(state.pId, amount)
+    try {
+        // Validate amount
+        if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+            throw new Error('Invalid amount. Please enter a valid number greater than zero.')
+        }
 
-    navigate('/')
-    setIsLoading(false)
-  }
+        await donate(contract, state.pId, amount.toString())
+
+        console.log('Donation successful.')
+
+        navigate('/')
+    } catch (error) {
+        console.error('Error donating:', error)
+    } finally {
+        setIsLoading(false)
+    }
+}
 
   return (
     <div>
